@@ -1,4 +1,4 @@
-package br.com.letscode.sinquia;
+package br.com.letscode.sinqia;
 
 public enum Tipo {
     ALIMENTOS(1.2),

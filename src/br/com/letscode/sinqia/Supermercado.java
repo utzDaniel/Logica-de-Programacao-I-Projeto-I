@@ -1,4 +1,4 @@
-package br.com.letscode.sinquia;
+package br.com.letscode.sinqia;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
