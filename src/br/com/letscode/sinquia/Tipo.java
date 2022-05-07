@@ -1,7 +1,4 @@
-//
-// Source code recreated from a .class file by IntelliJ IDEA
-// (powered by FernFlower decompiler)
-//
+package br.com.letscode.sinquia;
 
 public enum Tipo {
     ALIMENTOS(1.2),
@@ -10,7 +7,7 @@ public enum Tipo {
 
     private final double markup;
 
-    private Tipo(double markup) {
+    Tipo(double markup) {
         this.markup = markup;
     }
 

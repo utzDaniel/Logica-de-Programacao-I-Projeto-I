@@ -1,9 +1,25 @@
+package br.com.letscode.sinquia;
+
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.InputMismatchException;
 import java.util.Scanner;
 
 public class Supermercado {
+    /* =============================================================================================================================================================
+     Este codigo foi desenvolvido auxiliar no processo de compras e vendas de um supermercado
+     estoque        >> mantem o historico do estoque do supermercado
+     vendas         >> mantem o historico das vendas por cpf
+     infosProdutos  >> alimenta a matriz global estoque
+     infosVendas    >> alimenta a matriz global Vendas
+
+     Descricao dos arrays
+     posicao                      0            1            2              3                 4             5            6             7                8
+     estoque[][9]               = Tipo         Marca        Identificador  Nome              Preco Custo   Quantidade   Data Compta   Preco de Venda   Estoque
+     infosProdutos[5]           = TipoProduto  Marca        Identificador  Nome              Preco Custo   Quantidade
+     infosVendas[4]/vendas[][4] = CPF          TipoCliente  Quantidade     Valor Total Pago
+     * =============================================================================================================================================================
+    */
+
     private static int quantidadeEstoque = 0;
     private static int quantidadeVendas = 0;
     private static Object[][] estoque = new Object[5][9];
@@ -15,7 +31,7 @@ public class Supermercado {
         String opcoes = "0 1 2 3 4 5 6 7 8";
         do {
             while (true) {
-                System.out.println("---------------------------------------------------------------------------");
+                System.out.println("\n---------------------------------------------------------------------------");
                 System.out.println("\nPor favor, selecione o item desejado");
                 System.out.println("0 - Saida");
                 System.out.println("1 - Cadastrar/Comprar produtos");
@@ -27,76 +43,76 @@ public class Supermercado {
                 System.out.println("7 - Relatorio de vendas analitico");
                 System.out.println("8 - Relatorio de vendas sintetico\n");
                 System.out.println("---------------------------------------------------------------------------");
-                opcao = sc.next();
+                System.out.print("Digite aqui a sua opcao: ");
+                opcao = sc.nextLine();
 
                 if (opcao.charAt(0) == '0') {
+                    // saindo do sistema
+                    System.out.println("Saindo do sistema! Tchau, volte sempre!");
                     break;
                 }else if(opcoes.contains(opcao.substring(0, 1))){
-                    sistema(Integer.parseInt(opcao));
+                    // entrando no sistema
+                    sistema(Integer.parseInt(opcao), sc);
                 }else{
+                    // se o valor for invalido
                     System.out.println("Informe um item valido!");
                 }
-
             }
         } while (!opcoes.contains(opcao.substring(0, 1)));
-
-        System.out.println("Saindo do sistema! Tchau, volte sempre!");
     }
 
-    public static void sistema(int opcao) {
-        Object[] infos;
+    public static void sistema(int opcao, Scanner sc) {
+        Object[] infosProdutos;
 
         switch (opcao) {
-            case 1:
-                infos = inserirInfos();
-                int status = verificarCadastro((String) infos[2],2,estoque,quantidadeEstoque);
-                if (status == -1) {
-                    quantidadeEstoque = cadastrar(infos, estoque, quantidadeEstoque);
-                    //estoque inicia com 0
+            case 1: // Cadastrar/Comprar produtos
+                // inserindo as informacoes do produto
+                infosProdutos = inserirInfos(sc);
+
+                // se retornar -1 cadastra o produto, se nao recebe a linha onde precisa atualizar
+                int statusCadastro = verificarCadastro((String) infosProdutos[2],2,estoque,quantidadeEstoque);
+                if (statusCadastro == -1) {
+                    quantidadeEstoque = cadastrar(infosProdutos, estoque, quantidadeEstoque);
+                    //OBS: estoque sempre inicia com 0
                     estoque[quantidadeEstoque - 1][8] = 0;
                 } else {
-                    atualizar(infos, status);
+                    atualizar(infosProdutos, statusCadastro);
                 }
-                dadosDaCompra(infos);
+
+                // inserir data da compra, preco venda e estoque
+                dadosDaCompra(infosProdutos);
                 break;
-            case 2:
+            case 2: // Imprimir estoque
                 imprimirTabela(estoque, quantidadeEstoque);
                 break;
-            case 3:
-                listarPorTipo();
+            case 3: // Listar os produtos Por Tipo
+                listarPorTipo(sc);
                 break;
-            case 4:
-                // pesquisar produto pelo codigo
-                pesquisarPorCodigo();
+            case 4: // Pesquisar um produto pelo codigo
+                pesquisarPorCodigo(sc);
                 break;
-            case 5:
-                // pesquisar produto pelo contains
-                pesquisarPorNome();
+            case 5: // Pesquisar um produto pelo nome
+                pesquisarPorNome(sc);
                 break;
-            case 6:
-                // vendas
-                entradaCliente();
+            case 6: // Vendas
+                entradaCliente(sc);
                 break;
-            case 7:
-                // relatorio analitico
+            case 7: // Relatorio de vendas analitico
                 imprimirVendasAnalitico(vendas,quantidadeVendas);
                 break;
-            case 8:
-                // relatorio com o cpf igual
+            case 8: // Relatorios de vendas sintetico
                 calcularVendasSintetico();
                 break;
         }
-
     }
 
-    public static Object[] inserirInfos() {
-        Scanner sc = new Scanner(System.in);
+    public static Object[] inserirInfos(Scanner sc) {
         Object[] infos = new Object[6];
 
-        // Verificar entrada do enum tipo
+        // Verificar se entrada existe no enum Tipo
         do {
             try {
-                System.out.println("Tipo: ");
+                System.out.print("Tipo: ");
                 infos[0] = Tipo.valueOf(sc.nextLine());
                 break;
             } catch (Exception ex) {
@@ -104,40 +120,38 @@ public class Supermercado {
             }
         } while (true);
 
-        System.out.println("Marca: ");
+        System.out.print("Marca: ");
         infos[1] = sc.nextLine();
-        System.out.println("Identificador: ");
+        System.out.print("Identificador: ");
         infos[2] = sc.nextLine();
-        System.out.println("Nome: ");
+        System.out.print("Nome: ");
         infos[3] = sc.nextLine();
 
-        // Verificar se eh positivo e se eh double
+        // Verificar se preco custo eh positivo e double
         do {
             try {
-                System.out.println("Preco Custo: ");
-                infos[4] = sc.nextDouble();
+                System.out.print("Preco Custo: ");
+                infos[4] = Double.parseDouble(sc.nextLine());
                 if ((Double) infos[4] > 0.d) {
                     break;
                 }
                 System.out.println("Valor negativo invalido, digite novamente!");
-            } catch (InputMismatchException ex) {
+            } catch (NumberFormatException ex) {
                 System.out.println("Preco Custo invalido, digite novamente!");
-                sc.next();
             }
         } while (true);
 
-        // verificar entrada de quantidadeEstoque
+        // verificar se a quantidade eh positiva e inteira
         do {
             try {
-                System.out.println("Quantidade: ");
-                infos[5] = sc.nextInt();
+                System.out.print("Quantidade: ");
+                infos[5] = Integer.parseInt(sc.nextLine());
                 if ((Integer) infos[5] > 0) {
                     break;
                 }
                 System.out.println("Valor negativo invalido, digite novamente!");
-            } catch (InputMismatchException ex) {
+            } catch (NumberFormatException ex) {
                 System.out.println("Quantidade invalida, digite novamente!");
-                sc.next();
             }
         } while (true);
         return infos;
@@ -156,7 +170,6 @@ public class Supermercado {
         if (quantidade == matriz.length) {
             redimensionarEficiente();
         }
-
         for (int i = 0; i < infos.length; ++i) {
             matriz[quantidade][i] = infos[i];
         }
@@ -165,13 +178,11 @@ public class Supermercado {
 
     public static void redimensionarEficiente() {
         Object[][] newArray = new Object[estoque.length * 2][estoque[0].length];
-
         for (int i = 0; i < estoque.length; ++i) {
             for (int i1 = 0; i1 < estoque[i].length; ++i1) {
                 newArray[i][i1] = estoque[i][i1];
             }
         }
-
         estoque = newArray;
     }
 
@@ -179,7 +190,6 @@ public class Supermercado {
         for (int i = 0; i < infos.length; ++i) {
             estoque[posicao][i] = infos[i];
         }
-
     }
 
     public static void dadosDaCompra(Object[] infos) {
@@ -197,7 +207,6 @@ public class Supermercado {
         int quantidadeEstoque = (Integer) estoque[Supermercado.quantidadeEstoque - 1][8];
         int quantidadeCompra = (Integer) infos[5];
         estoque[Supermercado.quantidadeEstoque - 1][8] = quantidadeEstoque + quantidadeCompra;
-
     }
 
     public static void imprimirTabela(Object[][] estoque, int quantidade) {
@@ -212,21 +221,22 @@ public class Supermercado {
         System.out.println("----------------------------------------------------------------------------------------------------------------------------------------------------------");
     }
 
-    public static void listarPorTipo() {
+    public static void listarPorTipo(Scanner sc) {
         String opcao;
+        // matriz 'lista' mantem os produto do mesmo Tipo
         Object[][] lista = new Object[quantidadeEstoque][estoque[0].length];
-        Scanner sc = new Scanner(System.in);
+
+        // Selecionar o Tipo, sendo que o enum Tipo fornece as opcoes validas de tipos de produtos
         do {
             System.out.println("Por favor, selecione o item desejado");
             for (int i = 0; i < Tipo.values().length; i++) {
                 System.out.printf("%d - %s %n", i + 1, Tipo.values()[i]);
             }
-            opcao = sc.next();
-            if (opcao.equals("1") || opcao.equals("2") || opcao.equals("3")) {
-                break;
-            }
-        } while (true);
+            System.out.print("Digite aqui o item desejado: ");
+            opcao = sc.nextLine();
+        } while (!(opcao.equals("1") || opcao.equals("2") || opcao.equals("3")));
 
+        // preenche e imprime a matriz lista
         int contador = 0;
         for (int i = 0; i < quantidadeEstoque; i++) {
             if (estoque[i][0].equals(Tipo.values()[Integer.parseInt(opcao) - 1])) {
@@ -239,11 +249,12 @@ public class Supermercado {
         imprimirTabela(lista, contador);
     }
 
-    public static void pesquisarPorCodigo() {
-        Scanner sc = new Scanner(System.in);
-        System.out.println("Por favor, insira um identificador.");
+    public static void pesquisarPorCodigo(Scanner sc) {
+        System.out.print("Por favor, insira um identificador: ");
         String identificador = sc.nextLine();
 
+        // 'produto' salva soh o produto com o mesmo 'identificador'
+        // 'produto' eh uma matriz para reutilizar o 'imprimirTabela'
         Object[][] produto = new Object[1][estoque[0].length];
         for (int i = 0; i < quantidadeEstoque; i++) {
             if (estoque[i][2].equals(identificador)) {
@@ -258,11 +269,12 @@ public class Supermercado {
         System.out.println("Identificador nao encontrado!");
     }
 
-    public static void pesquisarPorNome() {
-        Scanner sc = new Scanner(System.in);
-        System.out.println("Por favor, insira um Nome.");
+    public static void pesquisarPorNome(Scanner sc) {
+        System.out.print("Por favor, insira um Nome: ");
         String nome = sc.nextLine();
 
+        // 'produto' salva TODAS as ocorrencias que aparecem 'Nome'
+        // 'produto' eh uma matriz para reutilizar o 'imprimirTabela'
         Object[][] produto = new Object[quantidadeEstoque][estoque[0].length];
         int quantidadeProduto = 0;
         for (int i = 0; i < quantidadeEstoque; i++) {
@@ -272,7 +284,6 @@ public class Supermercado {
                 }
                 quantidadeProduto++;
             }
-
         }
         if(quantidadeProduto > 0){
             imprimirTabela(produto, quantidadeProduto);
@@ -281,21 +292,21 @@ public class Supermercado {
         System.out.println("Nome nao encontrado!");
     }
 
-    public static void entradaCliente() {
-        Scanner sc = new Scanner(System.in);
-        Object infosVendas[] = new Object[4];
+    public static void entradaCliente(Scanner sc) {
+        Object[] infosVendas = new Object[4];
         do {
             System.out.println("Deseja inserir o CPF/CNPJ?");
             System.out.println("S - Sim");
             System.out.println("N - Nao");
+            System.out.print("Digite aqui a opcao: ");
             String opcao = sc.nextLine();
 
             // verificar se opcao esta ok
-            if (opcao.contains("S")) {
-                infosVendas[0] = verificarCPF();
-                infosVendas[1] = TipoCliente.values()[tipoDeCliente()];
+            if (opcao.equalsIgnoreCase("S")) {
+                infosVendas[0] = verificarCPF(sc);
+                infosVendas[1] = TipoCliente.values()[tipoDeCliente(sc)];
                 break;
-            } else if (opcao.contains("N")) {
+            } else if (opcao.equalsIgnoreCase("N")) {
                 infosVendas[0] = "00000000191";
                 infosVendas[1] = TipoCliente.values()[0];
                 break;
@@ -303,53 +314,57 @@ public class Supermercado {
                 System.out.println("Opcao invalida, digite novamente!");
             }
         } while (true);
-        venderProduto(infosVendas);
+        venderProduto(infosVendas,sc);
     }
 
-    public static int tipoDeCliente() {
-        Scanner sc = new Scanner(System.in);
+    public static int tipoDeCliente(Scanner sc) {
         String tipoCliente;
         do {
             System.out.println("Que tipo de cliente?");
             for (int i = 0; i < TipoCliente.values().length; i++) {
                 System.out.printf("%d - %s %n", i + 1, TipoCliente.values()[i]);
             }
-            tipoCliente = sc.next();
+            System.out.print("Digite aqui a sua opcao: ");
+            tipoCliente = sc.nextLine();
             if (tipoCliente.equals("1") || tipoCliente.equals("2") || tipoCliente.equals("3")) {
                 return Integer.parseInt(tipoCliente) - 1;
             }
         } while (true);
     }
 
-    public static String verificarCPF() {
-        Scanner sc = new Scanner(System.in);
+    public static String verificarCPF(Scanner sc) {
         String cpf;
         do {
-            System.out.println("Digite o CPF/CNPJ: ");
+            System.out.print("Digite o CPF/CNPJ: ");
             cpf = sc.nextLine();
             if (cpf.length() != 11) {
-                System.out.println("Erro na quantidadeEstoque de numeros, digite novamente!");
+                System.out.println("Erro na quantidade de numeros, digite novamente!");
             }
         } while (cpf.length() != 11);
         return cpf;
     }
 
-    public static void venderProduto(Object [] infosVendas) {
-        Scanner sc = new Scanner(System.in);
-        int linha = 0;
-        Object produtosVendidos[] []= new Object[5][5];
-        Object infosImprimir[] = new Object[5];
+    public static void venderProduto(Object[] infosVendas, Scanner sc) {
+        /* Descricao dos arrays/matrizes
+        posicao                               0              1            2           3                 4
+        produtosVendidos[][5]/infosImprimir = Identificador  Nome         Quantidade  Preco             Preco a pagar
+        infosVendas[4]/vendas[][4]          = CPF            TipoCliente  Quantidade  Valor Total Pago
+         */
+        int quantidadeProdutosVendidos = 0;
+        // salvar a venda de TODOS os produtos do cliente atual
+        Object[][] produtosVendidos = new Object[5][5];
+        // alimenta a matriz de TODOS os produtos vendidos
+        Object[] infosImprimir = new Object[5];
         int referenciaProduto;
         encerrarVenda:
         do {
-            //verificar se identificador é valido
             do {
-                System.out.println("Identificador ou fim para encerrar: ");
+                System.out.print("Digite o Identificador ou 'FIM' para finalizar a venda: ");
                 infosImprimir[0] = sc.nextLine();
                 if (((String) infosImprimir[0]).equalsIgnoreCase("FIM")) {
                     break encerrarVenda;
                 }
-                //verificar se o identificador existe no estoque
+                // verificar se identificador é valido (-1 existe, != nao existe)
                 referenciaProduto = verificarCadastro((String) infosImprimir[0],2,estoque,quantidadeEstoque);
                 if (referenciaProduto != -1) {
                     //nome do produto
@@ -363,8 +378,10 @@ public class Supermercado {
 
             do {
                 try {
-                    System.out.println("Quantidade: ");
+                    System.out.print("Quantidade: ");
                     infosImprimir[2] = Integer.parseInt(sc.nextLine());
+
+                    // verifica se a quantidade eh valida
                     if ((Integer) infosImprimir[2] <= 0) {
                         System.out.println("Valor negativo invalido, digite novamente!");
                     } else if ((Integer) infosImprimir[2] <= (Integer) estoque[referenciaProduto][8]) {
@@ -377,18 +394,22 @@ public class Supermercado {
 
                 } catch (NumberFormatException ex) {
                     System.out.println("Quantidade invalida, digite novamente!");
-                    sc.next();
                 }
             } while (true);
 
-            //Calcular o valor a pagar
+            //Calcular o valor a pagar do item atual
             infosImprimir[4] = (Integer) infosImprimir[2] * (Double) infosImprimir[3];
-            linha = cadastrar(infosImprimir, produtosVendidos, linha);
-        } while (true);
-        valorTotalDaVenda(infosVendas, produtosVendidos, linha);
-        quantidadeVendas = cadastrar(infosVendas,vendas,quantidadeVendas);
-        imprimirResumoDeVendas(produtosVendidos, linha);
 
+            // guarda a venda atual na matriz de produtos vendidos
+            quantidadeProdutosVendidos = cadastrar(infosImprimir, produtosVendidos, quantidadeProdutosVendidos);
+        } while (true);
+
+        // preenche infosVendas (CPF,TipoCliente,Quantidade,Valor Total Pago)
+        valorTotalDaVenda(infosVendas, produtosVendidos, quantidadeProdutosVendidos);
+
+        // guarda a venda atual no historico de vendas
+        quantidadeVendas = cadastrar(infosVendas,vendas,quantidadeVendas);
+        imprimirResumoDeVendas(produtosVendidos, quantidadeProdutosVendidos);
     }
 
     public static void imprimirResumoDeVendas(Object[][] produtosVendidos, int quantidade) {
@@ -400,11 +421,11 @@ public class Supermercado {
             System.out.format("%-15s %-20s %-12d %-15.2f %-15.2f %n", produtosVendidos[i][0], produtosVendidos[i][1], (Integer) produtosVendidos[i][2], (Double) produtosVendidos[i][3], (Double) produtosVendidos[i][4]);
         }
         System.out.println("-----------------------------------------------------------------------------------------");
-        System.out.printf("Valor total da Venda com Desconto de %.0f%%: R$ %.2f %n",(((TipoCliente) vendas[quantidadeVendas-1][1]).getDesconto()*100.d), vendas[quantidadeVendas-1][3]);
+        System.out.printf("Valor total da Venda com Desconto de %.0f%%: R$ %.2f %n",(((TipoCliente) vendas[quantidadeVendas-1][1]).getDesconto()*100.d), (Double) vendas[quantidadeVendas-1][3]);
         System.out.println("-----------------------------------------------------------------------------------------");
     }
 
-    public static void valorTotalDaVenda(Object [] infoVendas,Object[][] produtosVendidos, int linha) {
+    public static void valorTotalDaVenda(Object[] infoVendas, Object[][] produtosVendidos, int linha) {
         infoVendas[2] = 0;
         infoVendas[3] = 0.d;
         for (int i = 0; i < linha; i++) {
@@ -430,24 +451,24 @@ public class Supermercado {
     public static void calcularVendasSintetico() {
         Object[][] vendasSintetico = new Object[quantidadeVendas][3];
         int quantidadeClientes = 0;
-        int linha = 0;
+        int statusCadastro;
         for (int i = 0; i < quantidadeVendas; i++) {
-            //vendasSintetico[i][0] obtem cpf não duplicados
-            linha = verificarCadastro((String) vendasSintetico[i][0], 0, vendasSintetico, quantidadeClientes);
-            if (linha == -1) {
+            //vendasSintetico[i][0] obtem os cpf's nao duplicados do historico de vendas
+            statusCadastro = verificarCadastro((String) vendas[i][0], 0, vendasSintetico, quantidadeClientes);
+            if (statusCadastro == -1) {
                 vendasSintetico[quantidadeClientes][0] = vendas[i][0];
                 vendasSintetico[quantidadeClientes][1] = 0;
                 vendasSintetico[quantidadeClientes][2] = 0.d;
                 quantidadeClientes++;
             }
         }
+        // para cada cpf nao duplicado salvar o valor total de quantidade e do preco de venda
         for (int i = 0; i < quantidadeClientes; i++) {
             for (int i1 = 0; i1 < quantidadeVendas; i1++) {
                 if (vendasSintetico[i][0].equals(vendas[i1][0])) {
                     vendasSintetico[i][1] = (Integer) vendasSintetico[i][1] + (Integer) vendas[i1][2];
                     vendasSintetico[i][2] = (Double) vendasSintetico[i][2] + (Double) vendas[i1][3];
                 }
-
             }
         }
         imprimirVendasSintetico(vendasSintetico,quantidadeClientes);
@@ -463,7 +484,4 @@ public class Supermercado {
         }
         System.out.println("------------------------------------------------------------------");
     }
-
-
-
 }

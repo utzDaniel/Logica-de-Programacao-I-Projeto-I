@@ -1,3 +1,5 @@
+package br.com.letscode.sinquia;
+
 public enum TipoCliente {
     PF(0.d),
     PJ(0.05d),
