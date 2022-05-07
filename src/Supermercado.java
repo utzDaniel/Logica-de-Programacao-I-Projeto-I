@@ -1,8 +1,3 @@
-//
-// Source code recreated from a .class file by IntelliJ IDEA
-// (powered by FernFlower decompiler)
-//
-
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.InputMismatchException;
@@ -12,16 +7,12 @@ public class Supermercado {
     private static int quantidadeEstoque = 0;
     private static int quantidadeVendas = 0;
     private static Object[][] estoque = new Object[5][9];
-    private static Object[][] vendas = new Object[5][5];
+    private static Object[][] vendas = new Object[5][4];
 
     public Supermercado() {
     }
 
     public static void main(String[] args) {
-        menu();
-    }
-
-    public static void menu() {
         Scanner sc = new Scanner(System.in);
         String opcao;
         String opcoes = "0 1 2 3 4 5 6 7 8";
@@ -43,7 +34,7 @@ public class Supermercado {
                 System.out.println("---------------------------------------------------------------------------");
                 opcao = sc.next();
 
-                if (!opcoes.contains(opcao.substring(0,1))) {
+                if (!opcoes.contains(opcao.substring(0, 1))) {
                     break;
                 }
 
@@ -60,10 +51,11 @@ public class Supermercado {
         switch (opcao) {
             case 1:
                 infos = inserirInfos();
-                int status = verificarCadastro(infos);
+                int status = verificarCadastro((String) infos[2]);
                 if (status == -1) {
-                    cadastrar(infos,estoque,quantidadeEstoque);
-                    estoque[quantidadeEstoque-1][8] = 0;
+                    quantidadeEstoque = cadastrar(infos, estoque, quantidadeEstoque);
+                    //estoque inicia com 0
+                    estoque[quantidadeEstoque - 1][8] = 0;
                 } else {
                     atualizar(infos, status);
                 }
@@ -85,7 +77,7 @@ public class Supermercado {
                 break;
             case 6:
                 // vendas
-
+                entradaCliente();
                 break;
             case 7:
                 // relatorio analitico
@@ -153,16 +145,16 @@ public class Supermercado {
         return infos;
     }
 
-    public static int verificarCadastro(Object[] infos) {
+    public static int verificarCadastro(String identificador) {
         for (int i = 0; i < quantidadeEstoque; ++i) {
-            if (estoque[i][1].equals(infos[1]) && estoque[i][2].equals(infos[2])) {
+            if (estoque[i][2].equals(identificador)) {
                 return i;
             }
         }
         return -1;
     }
 
-    public static void cadastrar(Object[] infos, Object[][] matriz, int quantidade) {
+    public static int cadastrar(Object[] infos, Object[][] matriz, int quantidade) {
         if (quantidade == matriz.length) {
             redimensionarEficiente();
         }
@@ -170,9 +162,7 @@ public class Supermercado {
         for (int i = 0; i < infos.length; ++i) {
             matriz[quantidade][i] = infos[i];
         }
-
-        // condicao de estoque sempre zero
-        ++quantidade;
+        return ++quantidade;
     }
 
     public static void redimensionarEficiente() {
@@ -243,58 +233,57 @@ public class Supermercado {
 
         int contador = 0;
         for (int i = 0; i < quantidadeEstoque; i++) {
-            if(estoque[i][0].equals(Tipo.values()[Integer.parseInt(opcao)-1])){
+            if (estoque[i][0].equals(Tipo.values()[Integer.parseInt(opcao) - 1])) {
                 for (int i1 = 0; i1 < estoque[i].length; i1++) {
                     lista[contador][i1] = estoque[i][i1];
                 }
                 contador++;
             }
         }
-        imprimirTabela(lista,contador);
+        imprimirTabela(lista, contador);
     }
 
-    public static void pesquisarPorCodigo(){
+    public static void pesquisarPorCodigo() {
         Scanner sc = new Scanner(System.in);
         System.out.println("Por favor, insira um identificador.");
         String identificador = sc.nextLine();
 
         Object[][] produto = new Object[1][estoque[0].length];
         for (int i = 0; i < quantidadeEstoque; i++) {
-            if (estoque[i][2].equals(identificador)){
+            if (estoque[i][2].equals(identificador)) {
 
                 for (int i1 = 0; i1 < estoque[i].length; i1++) {
                     produto[0][i1] = estoque[i][i1];
                 }
-                imprimirTabela(produto,1);
+                imprimirTabela(produto, 1);
                 return;
             }
         }
         System.out.println("Identificador nao encontrado!");
     }
 
-    public static void pesquisarPorNome(){
+    public static void pesquisarPorNome() {
         Scanner sc = new Scanner(System.in);
         System.out.println("Por favor, insira um Nome.");
         String nome = sc.nextLine();
 
         Object[][] produto = new Object[1][estoque[0].length];
         for (int i = 0; i < quantidadeEstoque; i++) {
-            if (((String) estoque[i][3]).contains(nome)){
+            if (((String) estoque[i][3]).contains(nome)) {
 
                 for (int i1 = 0; i1 < estoque[i].length; i1++) {
                     produto[0][i1] = estoque[i][i1];
                 }
-                imprimirTabela(produto,1);
+                imprimirTabela(produto, 1);
                 return;
             }
         }
         System.out.println("Nome nao encontrado!");
     }
 
-    public static void venda(){
+    public static void entradaCliente() {
         Scanner sc = new Scanner(System.in);
-        String cpf;
-
+        Object infosVendas[] = new Object[4];
         do {
             System.out.println("Deseja inserir o CPF?");
             System.out.println("S - Sim");
@@ -303,28 +292,21 @@ public class Supermercado {
 
             // verificar se opcao esta ok
             if (opcao.contains("S")) {
-                do {
-                    System.out.println("Digite o CPF: ");
-                    cpf = sc.nextLine();
-                    if (cpf.length() != 11){
-                        System.out.println("Erro na quantidadeEstoque de numeros, digite novamente!");
-                    }
-                }while(cpf.length() != 11);
-
-                tipoDeCliente();
-
+                infosVendas[0] = verificarCPF();
+                infosVendas[1] = TipoCliente.values()[tipoDeCliente()];
                 break;
             } else if (opcao.contains("N")) {
-                cpf = "00000000191";
+                infosVendas[0] = "00000000191";
+                infosVendas[1] = TipoCliente.values()[0];
                 break;
             } else {
                 System.out.println("Opcao invalida, digite novamente!");
             }
-        } while(true);
-
+        } while (true);
+        venderProduto(infosVendas);
     }
 
-    public static String tipoDeCliente(){
+    public static int tipoDeCliente() {
         Scanner sc = new Scanner(System.in);
         String tipoCliente;
         do {
@@ -334,11 +316,104 @@ public class Supermercado {
             }
             tipoCliente = sc.next();
             if (tipoCliente.equals("1") || tipoCliente.equals("2") || tipoCliente.equals("3")) {
-                return tipoCliente;
+                return Integer.parseInt(tipoCliente) - 1;
             }
         } while (true);
+    }
+
+    public static String verificarCPF() {
+        Scanner sc = new Scanner(System.in);
+        String cpf;
+        do {
+            System.out.println("Digite o CPF/CNPJ: ");
+            cpf = sc.nextLine();
+            if (cpf.length() != 11) {
+                System.out.println("Erro na quantidadeEstoque de numeros, digite novamente!");
+            }
+        } while (cpf.length() != 11);
+        return cpf;
+    }
+
+    public static void venderProduto(Object [] infosVendas) {
+        Scanner sc = new Scanner(System.in);
+        int linha = 0;
+        Object produtosVendidos[] []= new Object[5][5];
+        Object infosImprimir[] = new Object[5];
+        int referenciaProduto;
+        encerrarVenda:
+        do {
+            //verificar se identificador é valido
+            do {
+                System.out.println("Identificador ou fim para encerrar: ");
+                infosImprimir[0] = sc.nextLine();
+                if (((String) infosImprimir[0]).equalsIgnoreCase("FIM")) {
+                    break encerrarVenda;
+                }
+                //verificar se o identificador existe no estoque
+                referenciaProduto = verificarCadastro((String) infosImprimir[0]);
+                if (referenciaProduto != -1) {
+                    //nome do produto
+                    infosImprimir[1] = estoque[referenciaProduto][3];
+                    //preço de venda do produto
+                    infosImprimir[3] = estoque[referenciaProduto][7];
+                    break;
+                }
+                System.out.println("Identificador invalido!");
+            } while (true);
+
+            do {
+                try {
+                    System.out.println("Quantidade: ");
+                    infosImprimir[2] = Integer.parseInt(sc.nextLine());
+                    if ((Integer) infosImprimir[2] <= 0) {
+                        System.out.println("Valor negativo invalido, digite novamente!");
+                    } else if ((Integer) infosImprimir[2] <= (Integer) estoque[referenciaProduto][8]) {
+                        //Dando baixa no estoque do produto
+                        estoque[referenciaProduto][8] = (Integer) estoque[referenciaProduto][8] - (Integer) infosImprimir[2];
+                        break;
+                    } else {
+                        System.out.println("A quantidade informada é maior que a quantidade disponivel!");
+                    }
+
+                } catch (NumberFormatException ex) {
+                    System.out.println("Quantidade invalida, digite novamente!");
+                    sc.next();
+                }
+            } while (true);
+
+            //Calcular o valor a pagar
+            infosImprimir[4] = (Integer) infosImprimir[2] * (Double) infosImprimir[3];
+            linha = cadastrar(infosImprimir, produtosVendidos, linha);
+        } while (true);
+        imprimirResumoDeVendas(produtosVendidos, linha);
+        valorTotalDaVenda(produtosVendidos, linha);
 
     }
 
+    public static void imprimirResumoDeVendas(Object[][] produtosVendidos, int quantidade) {
+        System.out.println("--------------------------------------------------------------------------------------------------------------");
+        System.out.printf("%-15s %-20s %-12s %-15s %-15s", "Identificador", "Nome", "Quantidade", "Preco", "Valor a Pagar");
+        System.out.println();
+        System.out.println("--------------------------------------------------------------------------------------------------------------");
+
+        for (int i = 0; i < quantidade; ++i) {
+            System.out.format("%-15s %-20s %-12d %-15.2f %-15.2f", produtosVendidos[i][0], produtosVendidos[i][1], (Integer) produtosVendidos[i][2], (Double) produtosVendidos[i][3], (Double) produtosVendidos[i][4]);
+            System.out.println();
+        }
+
+        System.out.println("----------------------------------------------------------------------------------------------------------------------------------------------------------");
+    }
+
+    public static void valorTotalDaVenda(Object[][] produtosVendidos, int linha) {
+        vendas[quantidadeVendas][2] = 0;
+        vendas[quantidadeVendas][3] = 0.d;
+        for (int i = 0; i < linha; i++) {
+            //Quantidade total de produtos
+            vendas[quantidadeVendas][2] = (Integer) vendas[quantidadeVendas][2] + (Integer) produtosVendidos[i][2];
+            //Preço total de produtos
+            vendas[quantidadeVendas][3] = (Double) vendas[quantidadeVendas][3] + (Double) produtosVendidos[i][4];
+        }
+        vendas[quantidadeVendas][3] = (Double) vendas[quantidadeVendas][3] * (1.d - ((TipoCliente) vendas[quantidadeVendas][1]).getDesconto());
+    }
 
 }
